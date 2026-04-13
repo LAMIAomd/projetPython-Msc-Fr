@@ -1,0 +1,24 @@
+{
+    "livres": [
+        {
+            "titre": "YAYA",
+            "auteur": "YOUSSEF",
+            "annee": 2005,
+            "isbn": "111",
+            "disponible": true
+        },
+        {
+            "titre": "YASALAM",
+            "auteur": "AYMEN",
+            "annee": 1999,
+            "isbn": "1234",
+            "disponible": true
+        }
+    ],
+    "utilisateurs": [
+        {
+            "nom": "YASSINE",
+            "id": 1
+        }
+    ]
+}

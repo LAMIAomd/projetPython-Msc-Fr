@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiblioGest — Gestion de Bibliothèque</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue-900: #0a1628;
+  --blue-800: #0f2040;
+  --blue-700: #163060;
+  --blue-600: #1e47a0;
+  --blue-500: #2563eb;
+  --blue-400: #4d86f5;
+  --blue-100: #dbeafe;
+  --blue-50:  #eff6ff;
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-500: #6b7280;
+  --gray-300: #d1d5db;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+  --white:    #ffffff;
+  --danger:   #dc2626;
+  --danger-bg:#fef2f2;
+  --success:  #16a34a;
+  --success-bg:#f0fdf4;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:    0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05);
+  --radius:    6px;
+  --radius-lg: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: var(--gray-700);
+  background: var(--gray-100);
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 56px 1fr;
+}
+
+header {
+  grid-column: 1 / -1;
+  background: var(--blue-800);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 20px;
+  border-bottom: 1px solid var(--blue-700);
+}
+.brand { display: flex; align-items: baseline; gap: 8px; }
+.brand-name {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.01em;
+}
+.brand-sub {
+  font-size: 12px;
+  color: var(--blue-400);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.header-spacer { flex: 1; }
+.header-badge {
+  font-size: 12px;
+  color: var(--blue-400);
+  border: 1px solid var(--blue-700);
+  border-radius: 20px;
+  padding: 3px 12px;
+  letter-spacing: 0.03em;
+}
+
+nav {
+  background: var(--white);
+  border-right: 1px solid var(--gray-200);
+  padding: 20px 0;
+  overflow-y: auto;
+}
+.nav-section {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  padding: 16px 20px 6px;
+}
+nav button {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 9px 20px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  border-left: 3px solid transparent;
+}
+nav button:hover { background: var(--blue-50); color: var(--blue-600); }
+nav button.active {
+  background: var(--blue-50);
+  color: var(--blue-600);
+  font-weight: 500;
+  border-left-color: var(--blue-500);
+}
+
+main {
+  padding: 32px 36px;
+  overflow-y: auto;
+  max-height: calc(100vh - 56px);
+}
+
+.page { display: none; }
+.page.active { display: block; animation: appear 0.18s ease; }
+@keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header { margin-bottom: 28px; }
+.page-title {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+.page-desc { font-size: 13px; color: var(--gray-500); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-label { font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.stat-val { font-family: 'IBM Plex Serif', serif; font-size: 32px; font-weight: 600; color: var(--blue-800); line-height: 1; }
+.stat-sub { font-size: 12px; color: var(--gray-500); margin-top: 6px; }
+.stat-accent { color: var(--blue-500); }
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-head {
+  padding: 15px 22px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-head h3 { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 10px 18px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--gray-200);
+}
+tbody td {
+  padding: 12px 18px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-700);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--blue-50); }
+td.mono { font-family: monospace; font-size: 12.5px; color: var(--gray-500); }
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.badge-ok  { background: var(--success-bg); color: var(--success); }
+.badge-out { background: var(--danger-bg);  color: var(--danger);  }
+
+.form-body { padding: 22px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.full   { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--gray-700);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+input, select {
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  color: var(--gray-900);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus, select:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+input::placeholder { color: var(--gray-300); }
+.form-foot {
+  padding: 14px 22px;
+  background: var(--gray-100);
+  border-top: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn-primary { background: var(--blue-600); color: var(--white); }
+.btn-primary:hover { background: var(--blue-700); }
+.btn-success { background: var(--success); color: var(--white); }
+.btn-success:hover { opacity: .88; }
+.btn-danger  { background: transparent; border: 1px solid var(--gray-300); color: var(--danger); font-size: 12px; padding: 5px 12px; }
+.btn-danger:hover  { background: var(--danger-bg); border-color: var(--danger); }
+
+.progress-wrap { padding: 18px 22px; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--gray-500); margin-bottom: 8px; }
+.progress-labels strong { color: var(--gray-900); }
+.progress-bar { height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--blue-500); border-radius: 3px; transition: width 0.5s ease; }
+
+.search-bar {
+  display: flex;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-100);
+}
+.search-bar select { max-width: 180px; }
+.search-bar input  { flex: 1; }
+
+.empty { padding: 48px; text-align: center; color: var(--gray-500); font-style: italic; font-size: 13.5px; }
+
+#toast-container { position: fixed; top: 18px; right: 22px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-left: 4px solid var(--blue-500);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+  min-width: 260px;
+  font-size: 13.5px;
+  color: var(--gray-700);
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.2s ease;
+}
+.toast.error   { border-left-color: var(--danger); }
+.toast.success { border-left-color: var(--success); }
+@keyframes slideIn { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">BiblioGest</span>
+    <span class="brand-sub">Gestion de Bibliothèque</span>
+  </div>
+  <div class="header-spacer"></div>
+  <span class="header-badge">MSC1 — Groupe 2</span>
+</header>
+
+<nav>
+  <div class="nav-section">Vue d'ensemble</div>
+  <button class="active" onclick="showPage('dashboard')" data-page="dashboard">Tableau de bord</button>
+
+  <div class="nav-section">Catalogue</div>
+  <button onclick="showPage('livres')" data-page="livres">Tous les livres</button>
+  <button onclick="showPage('ajouter-livre')" data-page="ajouter-livre">Ajouter un livre</button>
+  <button onclick="showPage('recherche')" data-page="recherche">Rechercher</button>
+
+  <div class="nav-section">Membres</div>
+  <button onclick="showPage('utilisateurs')" data-page="utilisateurs">Liste des membres</button>
+  <button onclick="showPage('ajouter-user')" data-page="ajouter-user">Ajouter un membre</button>
+
+  <div class="nav-section">Circulation</div>
+  <button onclick="showPage('emprunter')" data-page="emprunter">Enregistrer un emprunt</button>
+  <button onclick="showPage('retourner')" data-page="retourner">Enregistrer un retour</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-header">
+      <div class="page-title">Tableau de bord</div>
+      <div class="page-desc">Vue d'ensemble de la collection et de l'activité</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total livres</div>
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-sub">dans le catalogue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Disponibles</div>
+        <div class="stat-val stat-accent" id="stat-dispos">0</div>
+        <div class="stat-sub">prêts à l'emprunt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">En circulation</div>
+        <div class="stat-val" id="stat-empruntes">0</div>
+        <div class="stat-sub">livres empruntés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Membres</div>
+        <div class="stat-val" id="stat-users">0</div>
+        <div class="stat-sub">enregistrés</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Taux d'occupation de la collection</h3></div>
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span>Livres empruntés / Total</span>
+          <strong id="taux-pct">0%</strong>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="taux-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Livres actuellement en circulation</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Titre</th><th>Auteur</th><th>ISBN</th><th>Statut</th></tr></thead>
+          <tbody id="dash-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOUS LES LIVRES -->
+  <div id="page-livres" class="page">
+    <div class="page-header">
+      <div class="page-title">Catalogue des livres</div>
+      <div class="page-desc">Ensemble des ouvrages enregistrés dans le système</div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Titre</th><th>Auteur</th><th>Année</th><th>ISBN</th><th>Statut</th><th>Action</th></tr></thead>
+          <tbody id="livres-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- AJOUTER LIVRE -->
+  <div id="page-ajouter-livre" class="page">
+    <div class="page-header">
+      <div class="page-title">Ajouter un livre</div>
+      <div class="page-desc">Enregistrer un nouvel ouvrage dans le catalogue</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Fiche bibliographique</h3></div>
+      <div class="form-body">
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Titre de l'ouvrage</label>
+            <input type="text" id="livre-titre" placeholder="ex : Le Petit Prince">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Auteur</label>
+            <input type="text" id="livre-auteur" placeholder="Nom, Prénom">
+          </div>
+          <div class="form-group">
+            <label>Année de publication</label>
+            <input type="number" id="livre-annee" placeholder="ex : 1943">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>ISBN</label>
+            <input type="text" id="livre-isbn" placeholder="ex : 978-2-07-061275-8">
+          </div>
+        </div>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-primary" onclick="ajouterLivre()">Ajouter au catalogue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECHERCHE -->
+  <div id="page-recherche" class="page">
+    <div class="page-header">
+      <div class="page-title">Rechercher un livre</div>
+      <div class="page-desc">Filtrer la collection par titre ou par auteur</div>
+    </div>
+    <div class="card">
+      <div class="search-bar">
+        <select id="recherche-type">
+          <option value="titre">Recherche par titre</option>
+          <option value="auteur">Recherche par auteur</option>
+        </select>
+        <input type="text" id="recherche-query" placeholder="Entrez votre recherche…" oninput="rechercherLivre()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Titre</th><th>Auteur</th><th>Année</th><th>ISBN</th><th>Statut</th></tr></thead>
+          <tbody id="recherche-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- UTILISATEURS -->
+  <div id="page-utilisateurs" class="page">
+    <div class="page-header">
+      <div class="page-title">Liste des membres</div>
+      <div class="page-desc">Membres inscrits et leurs emprunts en cours</div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Nom</th><th>Emprunts en cours</th><th>Action</th></tr></thead>
+          <tbody id="users-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- AJOUTER UTILISATEUR -->
+  <div id="page-ajouter-user" class="page">
+    <div class="page-header">
+      <div class="page-title">Ajouter un membre</div>
+      <div class="page-desc">Inscrire un nouveau membre dans le système</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Fiche membre</h3></div>
+      <div class="form-body">
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Nom complet</label>
+            <input type="text" id="user-nom" placeholder="ex : Jean Dupont">
+          </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>Identifiant membre</label>
+            <input type="number" id="user-id" placeholder="Numéro entier unique">
+          </div>
+        </div>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-primary" onclick="ajouterUtilisateur()">Enregistrer le membre</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPRUNTER -->
+  <div id="page-emprunter" class="page">
+    <div class="page-header">
+      <div class="page-title">Enregistrer un emprunt</div>
+      <div class="page-desc">Associer un ouvrage disponible à un membre</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Formulaire d'emprunt</h3></div>
+      <div class="form-body">
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Membre emprunteur</label>
+            <select id="emprunt-user"></select>
+          </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>Ouvrage à emprunter</label>
+            <select id="emprunt-livre"></select>
+          </div>
+        </div>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-primary" onclick="emprunterLivre()">Valider l'emprunt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RETOURNER -->
+  <div id="page-retourner" class="page">
+    <div class="page-header">
+      <div class="page-title">Enregistrer un retour</div>
+      <div class="page-desc">Marquer un ouvrage comme restitué</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Formulaire de retour</h3></div>
+      <div class="form-body">
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Ouvrage à restituer</label>
+            <select id="retour-livre"></select>
+          </div>
+        </div>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-success" onclick="retournerLivre()">Valider le retour</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast-container"></div>
+
+<script>
+let bibliotheque = [];
+let utilisateurs = [];
+const KEY = 'bibliogest_v2';
+
+function sauvegarder() {
+  localStorage.setItem(KEY, JSON.stringify({ livres: bibliotheque, utilisateurs }));
+}
+
+function charger() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return defauts();
+    const d = JSON.parse(raw);
+    bibliotheque = d.livres || [];
+    utilisateurs = d.utilisateurs || [];
+  } catch { defauts(); }
+}
+
+function defauts() {
+  bibliotheque = [
+    { titre: "YAYA",    auteur: "YOUSSEF", annee: 2005, isbn: "111",  disponible: true },
+    { titre: "YASALAM", auteur: "AYMEN",   annee: 1999, isbn: "1234", disponible: true }
+  ];
+  utilisateurs = [{ nom: "YASSINE", id_utilisateur: 1, livres_empruntes: [] }];
+}
+
+function ajouterLivre() {
+  const titre = v('livre-titre'), auteur = v('livre-auteur'), anneeS = v('livre-annee'), isbn = v('livre-isbn');
+  if (!titre || !auteur || !anneeS || !isbn) return toast('Veuillez compléter tous les champs.', 'error');
+  const annee = parseInt(anneeS);
+  if (isNaN(annee)) return toast("L'année doit être un nombre entier.", 'error');
+  if (bibliotheque.some(l => l.isbn === isbn)) return toast(`ISBN ${isbn} déjà présent dans le catalogue.`, 'error');
+  bibliotheque.push({ titre, auteur, annee, isbn, disponible: true });
+  sauvegarder(); refresh();
+  ['livre-titre','livre-auteur','livre-annee','livre-isbn'].forEach(id => document.getElementById(id).value = '');
+  toast(`"${titre}" ajouté au catalogue.`, 'success');
+}
+
+function supprimerLivre(isbn) {
+  const i = bibliotheque.findIndex(l => l.isbn === isbn);
+  if (i === -1) return;
+  if (!bibliotheque[i].disponible) return toast("Impossible de supprimer un ouvrage actuellement emprunté.", 'error');
+  const titre = bibliotheque[i].titre;
+  bibliotheque.splice(i, 1);
+  sauvegarder(); refresh();
+  toast(`"${titre}" retiré du catalogue.`, 'success');
+}
+
+function ajouterUtilisateur() {
+  const nom = v('user-nom'), idS = v('user-id');
+  if (!nom || !idS) return toast('Veuillez compléter tous les champs.', 'error');
+  const id = parseInt(idS);
+  if (isNaN(id)) return toast("L'identifiant doit être un nombre entier.", 'error');
+  if (utilisateurs.some(u => u.id_utilisateur === id)) return toast(`L'identifiant ${id} est déjà attribué.`, 'error');
+  utilisateurs.push({ nom, id_utilisateur: id, livres_empruntes: [] });
+  sauvegarder(); refresh();
+  document.getElementById('user-nom').value = '';
+  document.getElementById('user-id').value  = '';
+  toast(`${nom} enregistré comme membre.`, 'success');
+}
+
+function supprimerUtilisateur(id) {
+  const u = utilisateurs.find(u => u.id_utilisateur === id);
+  if (!u) return;
+  if (u.livres_empruntes.length > 0) return toast("Ce membre a des emprunts en cours.", 'error');
+  utilisateurs = utilisateurs.filter(u => u.id_utilisateur !== id);
+  sauvegarder(); refresh();
+  toast('Membre supprimé.', 'success');
+}
+
+function emprunterLivre() {
+  const userId = parseInt(document.getElementById('emprunt-user').value);
+  const isbn   = document.getElementById('emprunt-livre').value;
+  const u = utilisateurs.find(u => u.id_utilisateur === userId);
+  const l = bibliotheque.find(l => l.isbn === isbn);
+  if (!u || !l) return toast('Sélection invalide.', 'error');
+  if (!l.disponible) return toast('Cet ouvrage est déjà en circulation.', 'error');
+  l.disponible = false;
+  u.livres_empruntes.push(isbn);
+  sauvegarder(); refresh();
+  toast(`${u.nom} — emprunt de "${l.titre}" enregistré.`, 'success');
+}
+
+function retournerLivre() {
+  const isbn = document.getElementById('retour-livre').value;
+  if (!isbn) return toast('Aucun ouvrage sélectionné.', 'error');
+  const l = bibliotheque.find(l => l.isbn === isbn);
+  if (!l || l.disponible) return toast("Cet ouvrage n'est pas en circulation.", 'error');
+  l.disponible = true;
+  utilisateurs.forEach(u => {
+    const i = u.livres_empruntes.indexOf(isbn);
+    if (i !== -1) u.livres_empruntes.splice(i, 1);
+  });
+  sauvegarder(); refresh();
+  toast(`"${l.titre}" — retour enregistré.`, 'success');
+}
+
+function refresh() {
+  renderDashboard(); renderLivres(); renderUsers(); rechercherLivre(); renderSelects();
+}
+
+function renderDashboard() {
+  const total = bibliotheque.length;
+  const empruntes = bibliotheque.filter(l => !l.disponible).length;
+  const dispos = total - empruntes;
+  const taux = total ? Math.round((empruntes / total) * 100) : 0;
+  document.getElementById('stat-total').textContent     = total;
+  document.getElementById('stat-dispos').textContent    = dispos;
+  document.getElementById('stat-empruntes').textContent = empruntes;
+  document.getElementById('stat-users').textContent     = utilisateurs.length;
+  document.getElementById('taux-pct').textContent       = taux + '%';
+  document.getElementById('taux-fill').style.width      = taux + '%';
+  const rows = bibliotheque.filter(l => !l.disponible);
+  document.getElementById('dash-table').innerHTML = rows.length
+    ? rows.map(l => `<tr><td>${l.titre}</td><td style="color:var(--gray-500)">${l.auteur}</td><td class="mono">${l.isbn}</td><td><span class="badge badge-out">Emprunté</span></td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty">Aucun ouvrage en circulation</td></tr>`;
+}
+
+function renderLivres() {
+  document.getElementById('livres-table').innerHTML = bibliotheque.length
+    ? bibliotheque.map(l => `<tr>
+        <td><strong>${l.titre}</strong></td>
+        <td style="color:var(--gray-500)">${l.auteur}</td>
+        <td style="color:var(--gray-500)">${l.annee}</td>
+        <td class="mono">${l.isbn}</td>
+        <td><span class="badge ${l.disponible ? 'badge-ok' : 'badge-out'}">${l.disponible ? 'Disponible' : 'Emprunté'}</span></td>
+        <td><button class="btn btn-danger" onclick="supprimerLivre('${l.isbn}')">Supprimer</button></td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="empty">Aucun livre dans le catalogue</td></tr>`;
+}
+
+function renderUsers() {
+  document.getElementById('users-table').innerHTML = utilisateurs.length
+    ? utilisateurs.map(u => {
+        const livres = u.livres_empruntes.map(isbn => {
+          const l = bibliotheque.find(b => b.isbn === isbn);
+          return l ? `<span class="badge badge-out" style="margin:1px 3px 1px 0">${l.titre}</span>` : '';
+        }).join('');
+        return `<tr>
+          <td class="mono">${u.id_utilisateur}</td>
+          <td><strong>${u.nom}</strong></td>
+          <td>${livres || '<span style="color:var(--gray-400)">Aucun</span>'}</td>
+          <td><button class="btn btn-danger" onclick="supprimerUtilisateur(${u.id_utilisateur})">Supprimer</button></td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="4" class="empty">Aucun membre enregistré</td></tr>`;
+}
+
+function rechercherLivre() {
+  const q = (document.getElementById('recherche-query')?.value || '').trim().toLowerCase();
+  const type = document.getElementById('recherche-type')?.value || 'titre';
+  const tbody = document.getElementById('recherche-table');
+  if (!q) { tbody.innerHTML = `<tr><td colspan="5" class="empty">Saisissez un terme pour effectuer une recherche</td></tr>`; return; }
+  const res = bibliotheque.filter(l => (type === 'titre' ? l.titre : l.auteur).toLowerCase().includes(q));
+  tbody.innerHTML = res.length
+    ? res.map(l => `<tr>
+        <td><strong>${l.titre}</strong></td>
+        <td style="color:var(--gray-500)">${l.auteur}</td>
+        <td style="color:var(--gray-500)">${l.annee}</td>
+        <td class="mono">${l.isbn}</td>
+        <td><span class="badge ${l.disponible ? 'badge-ok' : 'badge-out'}">${l.disponible ? 'Disponible' : 'Emprunté'}</span></td>
+      </tr>`).join('')
+    : `<tr><td colspan="5" class="empty">Aucun résultat trouvé</td></tr>`;
+}
+
+function renderSelects() {
+  document.getElementById('emprunt-user').innerHTML = utilisateurs.length
+    ? utilisateurs.map(u => `<option value="${u.id_utilisateur}">${u.nom} (ID : ${u.id_utilisateur})</option>`).join('')
+    : `<option value="">Aucun membre enregistré</option>`;
+
+  const dispos = bibliotheque.filter(l => l.disponible);
+  document.getElementById('emprunt-livre').innerHTML = dispos.length
+    ? dispos.map(l => `<option value="${l.isbn}">${l.titre} — ${l.auteur}</option>`).join('')
+    : `<option value="">Aucun ouvrage disponible</option>`;
+
+  const empruntes = bibliotheque.filter(l => !l.disponible);
+  document.getElementById('retour-livre').innerHTML = empruntes.length
+    ? empruntes.map(l => `<option value="${l.isbn}">${l.titre} — ${l.auteur}</option>`).join('')
+    : `<option value="">Aucun ouvrage en circulation</option>`;
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector(`[data-page="${id}"]`).classList.add('active');
+  refresh();
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+function v(id) { return document.getElementById(id).value.trim(); }
+
+charger();
+refresh();
+</script>
+</body>
+</html>
